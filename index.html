@@ -6,6 +6,13 @@
     <meta name="theme-color" content="#642A90">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <meta property="og:title" content="Vivo - Fretados">
+    <meta property="og:description" content="Consulta de horários de transporte fretado.">
+    <meta property="og:image" content="https://vivo-horarios-fretados.github.io/vivo-horario-fretado/favicon.png">
+    <meta property="og:url" content="https://vivo-horarios-fretados.github.io/vivo-horario-fretado/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     
     <title>Vivo - Fretados</title>
 
@@ -335,7 +342,6 @@
 
 <script>
     let db = {};
-    // A constante feriadosFixos foi removida daqui
     let horarioSelecionadoManual = null;
     let ultimoHorarioAlvo = null; 
     let vibrouTresMinutos = false;
@@ -451,7 +457,6 @@
         if (dataInput) {
             const partes = dataInput.split('-');
             const mesDia = `${partes[1]}-${partes[2]}`;
-            // Ajustado para ler do arquivo externo FERIADOS_FIXOS
             document.getElementById('check-feriado').checked = FERIADOS_FIXOS.includes(mesDia);
         }
         gerarLista();
