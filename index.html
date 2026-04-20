@@ -169,6 +169,7 @@
     <div id="menu-options" class="menu-options">
         <button onclick="abrirModal('share-modal')">🔗 Compartilhar</button>
         <button onclick="abrirLocalizacao()">📍 Localização</button>
+        <button onclick="window.location.reload()">↺ Redefinir</button>
     </div>
     <button class="btn-menu-float" onclick="toggleMenu()">☰</button>
 </div>
@@ -266,9 +267,6 @@
         const iframe = document.getElementById('map-iframe');
         if (localizacaoSelecionada) {
             const l = locais.find(x => x.nome === localizacaoSelecionada);
-            iframe.src = `https://www.google.com/maps/embed/v1/view?key=SUA_CHAVE_AQUI&center=${l.latitude},${l.longitude}&zoom=17`;
-            // Nota: Para funcionamento sem chave API, o Google Maps exige URL específica. 
-            // Mantendo a lógica de fallback para visualização de coordenadas:
             iframe.src = `https://maps.google.com/maps?q=${l.latitude},${l.longitude}&z=17&output=embed`;
         } else {
             iframe.src = `https://maps.google.com/maps?q=-23.6291,-46.7042&z=14&output=embed`;
