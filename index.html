@@ -127,7 +127,6 @@
         .btn-copy { background: var(--vivo-purple); color: white; }
         .btn-close { background: #f5f5f5; color: #666; }
         
-        /* Ajuste específico para o botão fechar da localização para alinhar com o padrão */
         .location-btn-close { width: calc(100% - 20px); margin: 10px auto 15px; display: block; border-radius: 12px; }
 
         .qr-code-img { width: 160px; height: 160px; margin: 0 auto 15px; display: block; }
@@ -209,7 +208,6 @@
     let ultimoMinutoRenderizado = -1;
     let localizacaoSelecionada = null;
 
-    // --- LÓGICA DO MENU E LOCALIZAÇÃO ---
     function toggleMenu() {
         const menu = document.getElementById('menu-options');
         menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
@@ -238,15 +236,12 @@
         const container = document.getElementById('location-list-container');
         container.innerHTML = '';
         localizacaoSelecionada = selecionado;
-
         const ordenados = [...locais].sort((a, b) => a.nome.localeCompare(b.nome));
-
         ordenados.forEach(loc => {
             const isSelected = loc.nome === localizacaoSelecionada;
             const item = document.createElement('div');
             item.className = `location-item ${isSelected ? 'selected' : ''}`;
             const icon = loc.nome.toLowerCase().replace(' ', '_') + '.png';
-
             item.innerHTML = `
                 <div class="location-info">
                     <span class="loc-nome">${loc.nome}</span>
@@ -254,10 +249,7 @@
                 </div>
                 <img src="img/${icon}" class="loc-icon">
             `;
-
-            item.onclick = () => {
-                renderizarListaLocalidades(localizacaoSelecionada === loc.nome ? null : loc.nome);
-            };
+            item.onclick = () => renderizarListaLocalidades(localizacaoSelecionada === loc.nome ? null : loc.nome);
             container.appendChild(item);
         });
         atualizarMapa();
@@ -269,11 +261,10 @@
             const l = locais.find(x => x.nome === localizacaoSelecionada);
             iframe.src = `https://maps.google.com/maps?q=${l.latitude},${l.longitude}&z=17&output=embed`;
         } else {
-            iframe.src = `https://maps.google.com/maps?q=-23.6291,-46.7042&z=14&output=embed`;
+            iframe.src = `about:blank`;
         }
     }
 
-    // --- LÓGICA ORIGINAL DO SISTEMA ---
     function organizarDados() {
         const organizado = {};
         HORARIOS_DATA.forEach(item => {
@@ -288,6 +279,7 @@
     function iniciar() {
         organizarDados();
         const pSelReal = document.getElementById('select-partida');
+        const dSelReal = document.getElementById('select-destino');
         Object.keys(db).forEach(p => pSelReal.options.add(new Option(p, p)));
         const agora = new Date();
         const horaMinutoAtual = (agora.getHours() * 100) + agora.getMinutes();
@@ -296,12 +288,17 @@
         if (horaMinutoAtual < 1430) {
             pSelReal.value = localidadePreferida;
             atualizarDestinos();
-            document.getElementById('select-destino').value = "TELEFONICA";
+            dSelReal.value = "TELEFONICA";
         } else {
             pSelReal.value = "TELEFONICA";
             atualizarDestinos();
-            document.getElementById('select-destino').value = localidadePreferida;
+            dSelReal.value = localidadePreferida;
         }
+        
+        // CORREÇÃO: Sincroniza as imagens iniciais
+        pSelReal.setAttribute('data-local', pSelReal.value);
+        dSelReal.setAttribute('data-local', dSelReal.value);
+
         resetarDataHoje();
     }
 
@@ -362,19 +359,15 @@
         const isFeriado = document.getElementById('check-feriado').checked;
         const listaDiv = document.getElementById('lista-horarios');
         const timerBox = document.getElementById('timer-box');
-        
         const agoraOriginal = new Date();
         const agoraLimpo = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), agoraOriginal.getHours(), agoraOriginal.getMinutes(), 0, 0);
         ultimoMinutoRenderizado = agoraOriginal.getMinutes();
-
         const dataObj = new Date(dataInput + "T00:00:00");
         let filtroDia = isFeriado ? "Feriado" : (dataObj.getDay() === 0 ? "Domingo" : (dataObj.getDay() === 6 ? "Sábado" : "Dia Útil"));
         document.getElementById('info-dia').innerText = filtroDia;
-
         const horarios = (db[partida] && db[partida][destino]) ? (db[partida][destino][filtroDia] || []) : [];
         listaDiv.innerHTML = "";
         const ehHoje = (dataInput === new Date(agoraOriginal.getTime() - (agoraOriginal.getTimezoneOffset() * 60000)).toISOString().split('T')[0]);
-
         let proximoAuto = null;
         if (ehHoje) {
             horarios.forEach(h => {
@@ -383,11 +376,9 @@
                 if (hV > agoraLimpo && !proximoAuto) proximoAuto = h;
             });
         }
-
         const alvoFinal = (ehHoje && !horarioSelecionadoManual) ? proximoAuto : horarioSelecionadoManual;
         const infoDH = document.getElementById('data-hora-info');
         const diaFormatado = dataInput.split('-').slice(1).reverse().join('/');
-
         if (ehHoje) {
             if (horarioSelecionadoManual && horarioSelecionadoManual !== proximoAuto) {
                 timerBox.classList.remove('modo-real');
@@ -403,14 +394,12 @@
             document.getElementById('timer-status').innerText = "Horário Selecionado:";
             infoDH.innerText = alvoFinal ? `${diaFormatado} às ${alvoFinal}` : `${diaFormatado}`;
         }
-
         horarios.forEach(h => {
             const card = document.createElement('div');
             card.className = 'horario-card';
             card.innerText = h;
             const [hr, min] = h.split(':');
             const hV = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), parseInt(hr), parseInt(min), 0, 0);
-
             if (ehHoje && hV <= agoraLimpo) card.classList.add('passado');
             if (h === alvoFinal && ehHoje && hV > agoraLimpo) {
                 card.classList.remove('passado');
@@ -423,18 +412,14 @@
                     ultimoHorarioAlvo = h;
                     setTimeout(() => card.scrollIntoView({ block: 'start' }), 200);
                 }
-            } else if (!ehHoje && h === horarioSelecionadoManual) {
-                card.classList.add('proximo-fretado-sempre');
-            }
+            } else if (!ehHoje && h === horarioSelecionadoManual) card.classList.add('proximo-fretado-sempre');
             if (horarioSelecionadoManual && h === horarioSelecionadoManual) card.classList.add('selecionado');
-
             card.onclick = () => {
                 horarioSelecionadoManual = (h === proximoAuto || horarioSelecionadoManual === h) ? null : h;
                 limparVibracoes(); ultimoHorarioAlvo = null; gerarLista();
             };
             listaDiv.appendChild(card);
         });
-
         const diffDias = Math.round((new Date(dataObj.getFullYear(), dataObj.getMonth(), dataObj.getDate()) - new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate())) / 86400000);
         iniciarContagem(alvoFinal, diffDias, (ehHoje && (!horarioSelecionadoManual || horarioSelecionadoManual === proximoAuto)));
     }
@@ -444,35 +429,28 @@
         clearInterval(timerInterval);
         const display = document.getElementById('countdown');
         const timerBox = document.getElementById('timer-box'); 
-
         if (diffDias !== 0) {
             timerBox.classList.remove('modo-encerrado'); 
             display.innerText = diffDias === 1 ? "Amanhã" : (diffDias === -1 ? "Ontem" : (diffDias > 1 ? `Em ${diffDias} dias` : `Há ${Math.abs(diffDias)} dias`));
             return;
         }
-
         if (!hAlvo) { display.innerText = "Encerrado"; timerBox.classList.add('modo-encerrado'); return; } 
         else timerBox.classList.remove('modo-encerrado'); 
-
         const [h, m] = hAlvo.split(':');
         const alvo = new Date(); alvo.setHours(parseInt(h), parseInt(m), 0, 0);
-
         timerInterval = setInterval(() => {
             const agora = new Date();
             const diff = alvo - agora;
             if (agora.getMinutes() !== ultimoMinutoRenderizado) { gerarLista(); return; }
-
             if (isProximoReal && navigator.vibrate) {
                 if (diff <= 180000 && diff > 179000 && !vibrouTresMinutos) { navigator.vibrate([100,100,100,100,100]); vibrouTresMinutos = true; }
                 if (diff <= 60000 && diff > 59000 && !vibrouUmMinuto) { navigator.vibrate([100,100,100]); vibrouUmMinuto = true; }
             }
-
             if (diff <= 500) {
                 if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
                 display.innerText = "00:00:00"; timerBox.classList.add('modo-encerrado'); clearInterval(timerInterval);
                 horarioSelecionadoManual = null; ultimoHorarioAlvo = null; setTimeout(gerarLista, 1000); return;
             }
-
             const hrs = Math.floor(diff / 3600000).toString().padStart(2, '0');
             const min = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
             const sec = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
@@ -496,7 +474,6 @@
     }
 
     function limparVibracoes() { vibrouTresMinutos = vibrouUmMinuto = vibrouChegada = false; }
-
     window.onload = iniciar;
 </script>
 </body>
