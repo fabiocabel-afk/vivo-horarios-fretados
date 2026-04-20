@@ -72,10 +72,10 @@
             padding: 0 15px; height: 52px; font-weight: 600; font-size: 0.85rem; color: var(--vivo-purple); flex: 1;
         }
 
-        .feriado-toggle input { width: 40px; height: 22px; appearance: none; background: #DDD; border-radius: 20px; position: relative; transition: .3s; }
-        .feriado-toggle input:checked { background: var(--vivo-green); }
-        .feriado-toggle input::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; top: 2px; left: 2px; background: white; transition: .3s; }
-        .feriado-toggle input:checked::before { transform: translateX(18px); }
+        .feriado-toggle input[type="checkbox"] { width: 40px; height: 22px; appearance: none; background: #DDD; border-radius: 20px; position: relative; transition: .3s; }
+        .feriado-toggle input[type="checkbox"]:checked { background: var(--vivo-green); }
+        .feriado-toggle input[type="checkbox"]::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; top: 2px; left: 2px; background: white; transition: .3s; }
+        .feriado-toggle input[type="checkbox"]:checked::before { transform: translateX(18px); }
 
         .timer-container { 
             margin: 0 15px 15px; background: linear-gradient(135deg, var(--vivo-purple), var(--vivo-purple-light)); 
@@ -112,6 +112,14 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; box-shadow: var(--shadow); position: relative; }
         
+        /* NOTIFICAÇÃO MODAL STYLE */
+        .notification-config { text-align: left; }
+        .notif-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .slider-container { margin-top: 15px; opacity: 0.4; pointer-events: none; transition: 0.3s; }
+        .slider-container.active { opacity: 1; pointer-events: auto; }
+        input[type="range"] { width: 100%; accent-color: var(--vivo-purple); margin: 15px 0; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 800; color: var(--vivo-purple); }
+
         .location-modal-content { padding: 0; overflow: hidden; max-width: 350px; }
         #map-container { width: 100%; height: 200px; background: #eee; }
         .location-list { max-height: 280px; overflow-y: auto; padding: 10px; background: white; }
@@ -167,6 +175,7 @@
 <div class="menu-container">
     <div id="menu-options" class="menu-options">
         <button onclick="abrirModal('share-modal')">🔗 Compartilhar</button>
+        <button onclick="abrirModal('notif-modal')">🔔 Notificação</button>
         <button onclick="abrirLocalizacao()">📍 Localização</button>
         <button onclick="window.location.reload()">↺ Redefinir</button>
     </div>
@@ -176,11 +185,36 @@
 <div id="share-modal" class="modal-overlay" onclick="fecharAoClicarFora(event)">
     <div class="modal-content">
         <h3 style="margin:0; color:var(--vivo-purple); font-weight:800;">Vivo ⏱️ Transporte</h3>
-        <p style="font-size:0.8rem; color:#666; margin: 5px 0 15px;">Compartilhe os horários</p>
         <img src="img/qrcode.png" alt="QR Code" class="qr-code-img">
         <button class="btn-modal btn-copy" onclick="copiarLink()">Copiar Link</button>
         <div id="copy-toast">link copiado</div>
         <button class="btn-modal btn-close" onclick="fecharModal('share-modal')">Fechar</button>
+    </div>
+</div>
+
+<div id="notif-modal" class="modal-overlay" onclick="fecharAoClicarFora(event)">
+    <div class="modal-content">
+        <h3 style="margin:0 0 20px; color:var(--vivo-purple); font-weight:800;">Configurar Alerta</h3>
+        <div class="notification-config">
+            <div class="notif-row">
+                <span style="font-weight: 700; color: var(--text-main);">Ativar Notificações</span>
+                <label class="feriado-toggle" style="flex: none; border: none; padding: 0; height: auto; background: transparent;">
+                    <input type="checkbox" id="check-notif" onchange="toggleNotifSlider()">
+                </label>
+            </div>
+            <div id="slider-box" class="slider-container">
+                <div class="slider-label">
+                    <span>Tempo de antecedência</span>
+                    <span id="val-notif">0 min</span>
+                </div>
+                <input type="range" id="range-notif" min="0" max="10" value="0" step="1" oninput="atualizarLabelNotif()">
+                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #999;">
+                    <span>Partida</span>
+                    <span>10 min</span>
+                </div>
+            </div>
+        </div>
+        <button class="btn-modal btn-copy" style="margin-top: 25px;" onclick="fecharModal('notif-modal')">Salvar Configuração</button>
     </div>
 </div>
 
@@ -205,6 +239,8 @@
     let vibrouTresMinutos = false;
     let vibrouUmMinuto = false;
     let vibrouChegada = false;
+    let notificouAlerta = false; // Controle de notificação
+    let notificouPartida = false; // Controle de partida
     let ultimoMinutoRenderizado = -1;
     let localizacaoSelecionada = null;
 
@@ -216,6 +252,9 @@
     function abrirModal(id) {
         document.getElementById(id).style.display = 'flex';
         document.getElementById('menu-options').style.display = 'none';
+        if(id === 'notif-modal' && "Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
     }
 
     function fecharModal(id) {
@@ -224,6 +263,23 @@
 
     function fecharAoClicarFora(e) {
         if (e.target.classList.contains('modal-overlay')) e.target.style.display = 'none';
+    }
+
+    function toggleNotifSlider() {
+        const ativo = document.getElementById('check-notif').checked;
+        const box = document.getElementById('slider-box');
+        if(ativo) {
+            box.classList.add('active');
+            if(Notification.permission !== "granted") Notification.requestPermission();
+        } else {
+            box.classList.remove('active');
+        }
+    }
+
+    function atualizarLabelNotif() {
+        const val = document.getElementById('range-notif').value;
+        document.getElementById('val-notif').innerText = val + " min";
+        notificouAlerta = false; // Permite notificar novamente se mudar o tempo
     }
 
     function abrirLocalizacao() {
@@ -286,23 +342,19 @@
         const horaMinutoAtual = (agora.getHours() * 100) + agora.getMinutes();
         let localidadePreferida = localStorage.getItem('localidade_base') || "BORBA GATO";
         
-        // IDENTIFICA O TIPO DE DIA PARA BUSCAR O HORÁRIO DE CORTE CORRETO
         const isFeriado = FERIADOS_FIXOS.includes(`${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`);
         let filtroDia = isFeriado ? "Feriado" : (agora.getDay() === 0 ? "Domingo" : (agora.getDay() === 6 ? "Sábado" : "Dia Útil"));
 
-        // BUSCA O ÚLTIMO HORÁRIO DE IDA (Base -> Telefônica) NO ARQUIVO DE DADOS
         const horariosIda = (db[localidadePreferida] && db[localidadePreferida]["TELEFONICA"]) 
                             ? (db[localidadePreferida]["TELEFONICA"][filtroDia] || []) 
                             : [];
 
-        // DEFINE O HORÁRIO DE CORTE DINAMICAMENTE
-        let horarioCorte = 1430; // Valor padrão de segurança
+        let horarioCorte = 1430; 
         if (horariosIda.length > 0) {
             const ultimoHorarioStr = horariosIda[horariosIda.length - 1];
             horarioCorte = parseInt(ultimoHorarioStr.replace(':', ''));
         }
 
-        // LÓGICA DE ALTERNÂNCIA BASEADA NO CORTE DINÂMICO
         if (horaMinutoAtual <= horarioCorte) {
             pSelReal.value = localidadePreferida;
             atualizarDestinos();
@@ -329,7 +381,7 @@
 
     function resetECarregar() {
         horarioSelecionadoManual = null; ultimoHorarioAlvo = null;
-        limparVibracoes(); atualizarDestinos(); salvarPreferencias();
+        limparSinais(); atualizarDestinos(); salvarPreferencias();
     }
 
     function atualizarDestinos() {
@@ -364,7 +416,7 @@
     }
 
     function validarData() {
-        horarioSelecionadoManual = null; ultimoHorarioAlvo = null; limparVibracoes();
+        horarioSelecionadoManual = null; ultimoHorarioAlvo = null; limparSinais();
         if (!document.getElementById('input-data').value) resetarDataHoje();
         else ajustarDiaPorData();
     }
@@ -396,6 +448,7 @@
         const alvoFinal = (ehHoje && !horarioSelecionadoManual) ? proximoAuto : horarioSelecionadoManual;
         const infoDH = document.getElementById('data-hora-info');
         const diaFormatado = dataInput.split('-').slice(1).reverse().join('/');
+        
         if (ehHoje) {
             if (horarioSelecionadoManual && horarioSelecionadoManual !== proximoAuto) {
                 timerBox.classList.remove('modo-real');
@@ -411,6 +464,7 @@
             document.getElementById('timer-status').innerText = "Horário Selecionado:";
             infoDH.innerText = alvoFinal ? `${diaFormatado} às ${alvoFinal}` : `${diaFormatado}`;
         }
+        
         horarios.forEach(h => {
             const card = document.createElement('div');
             card.className = 'horario-card';
@@ -433,7 +487,7 @@
             if (horarioSelecionadoManual && h === horarioSelecionadoManual) card.classList.add('selecionado');
             card.onclick = () => {
                 horarioSelecionadoManual = (h === proximoAuto || horarioSelecionadoManual === h) ? null : h;
-                limparVibracoes(); ultimoHorarioAlvo = null; gerarLista();
+                limparSinais(); ultimoHorarioAlvo = null; gerarLista();
             };
             listaDiv.appendChild(card);
         });
@@ -455,14 +509,38 @@
         else timerBox.classList.remove('modo-encerrado'); 
         const [h, m] = hAlvo.split(':');
         const alvo = new Date(); alvo.setHours(parseInt(h), parseInt(m), 0, 0);
+        
         timerInterval = setInterval(() => {
             const agora = new Date();
             const diff = alvo - agora;
             if (agora.getMinutes() !== ultimoMinutoRenderizado) { gerarLista(); return; }
+            
+            // LOGICA DE VIBRAÇÃO
             if (isProximoReal && navigator.vibrate) {
                 if (diff <= 180000 && diff > 179000 && !vibrouTresMinutos) { navigator.vibrate([100,100,100,100,100]); vibrouTresMinutos = true; }
                 if (diff <= 60000 && diff > 59000 && !vibrouUmMinuto) { navigator.vibrate([100,100,100]); vibrouUmMinuto = true; }
             }
+
+            // LOGICA DE NOTIFICAÇÃO CONFIGURÁVEL
+            const notifAtiva = document.getElementById('check-notif').checked;
+            const tempoNotif = parseInt(document.getElementById('range-notif').value) * 60000;
+            
+            if(notifAtiva && isProximoReal && ("Notification" in window) && Notification.permission === "granted") {
+                // Notificação de Antecedência (MM:SS)
+                if(tempoNotif > 0 && diff <= tempoNotif && diff > (tempoNotif - 1000) && !notificouAlerta) {
+                    const minStr = Math.floor(diff / 60000).toString().padStart(2, '0');
+                    const secStr = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                    new Notification("⏰ Próximo Fretado", { body: `O próximo veículo sai em ${minStr}:${secStr}`, icon: "favicon.png" });
+                    notificouAlerta = true;
+                }
+                // Notificação de Partida (00:00:00)
+                if(diff <= 1000 && diff > 0 && !notificouPartida) {
+                    const horaAtual = agora.getHours().toString().padStart(2, '0') + ":" + agora.getMinutes().toString().padStart(2, '0');
+                    new Notification("Bus Partiu", { body: `🚍 O veículo das ${horaAtual} partiu`, icon: "favicon.png" });
+                    notificouPartida = true;
+                }
+            }
+
             if (diff <= 500) {
                 if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
                 display.innerText = "00:00:00"; timerBox.classList.add('modo-encerrado'); clearInterval(timerInterval);
@@ -490,7 +568,10 @@
         localStorage.setItem('localidade_base', (p !== "TELEFONICA") ? p : d);
     }
 
-    function limparVibracoes() { vibrouTresMinutos = vibrouUmMinuto = vibrouChegada = false; }
+    function limparSinais() { 
+        vibrouTresMinutos = vibrouUmMinuto = vibrouChegada = false; 
+        notificouAlerta = notificouPartida = false;
+    }
     window.onload = iniciar;
 </script>
 </body>
