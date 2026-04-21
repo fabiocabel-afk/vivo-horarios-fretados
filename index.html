@@ -326,8 +326,8 @@
         const iframe = document.getElementById('map-iframe');
         if (localizacaoSelecionada) {
             const l = locais.find(x => x.nome === localizacaoSelecionada);
-            // CORREÇÃO: Adicionado o símbolo $ para ler a latitude corretamente
-            iframe.src = `http://googleusercontent.com/maps.google.com/${l.latitude},${l.longitude}`;
+            // Usando o formato de busca que não exige API Key
+            iframe.src = `https://www.google.com/maps?q=${l.latitude},${l.longitude}&z=16&output=embed`;
         } else {
             iframe.src = `about:blank`;
         }
@@ -534,14 +534,19 @@
             }
 
             const notifAtiva = document.getElementById('check-notif').checked;
-            const tempoNotif = parseInt(document.getElementById('range-notif').value) * 60000;
+            const slideVal = parseInt(document.getElementById('range-notif').value);
+            const tempoNotif = slideVal * 60000;
             
-            // CORREÇÃO: Disparo via Service Worker para compatibilidade com botão Push
             if(notifAtiva && isProximoReal && ("serviceWorker" in navigator) && Notification.permission === "granted") {
-                if(tempoNotif > 0 && diff <= (tempoNotif + 2000) && diff > (tempoNotif - 2000) && !notificouAlerta) {
+                if(diff <= (tempoNotif + 2000) && diff > (tempoNotif - 2000) && !notificouAlerta) {
+                    
+                    let msgNotif = slideVal === 0 
+                        ? `🚍 Veículo das ${hAlvo} saindo!` 
+                        : `⏰ O próximo veículo sai em ${slideVal} min`;
+
                     navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification("⏰ Próximo Fretado", { 
-                            body: `O próximo veículo sai em breve`, 
+                        registration.showNotification("Vivo Transporte", { 
+                            body: msgNotif, 
                             icon: "favicon.png",
                             tag: "alerta-fretado"
                         });
