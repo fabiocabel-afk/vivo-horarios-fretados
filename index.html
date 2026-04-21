@@ -523,6 +523,7 @@
         timerInterval = setInterval(() => {
             const agora = new Date();
             const diff = alvo - agora;
+            
             if (agora.getMinutes() !== ultimoMinutoRenderizado) { gerarLista(); return; }
             
             if (isProximoReal && navigator.vibrate) {
@@ -534,8 +535,7 @@
             const tempoNotif = parseInt(document.getElementById('range-notif').value) * 60000;
             
             if(notifAtiva && isProximoReal && ("Notification" in window) && Notification.permission === "granted") {
-                // Notificação de Antecedência
-                if(tempoNotif > 0 && diff <= tempoNotif && !notificouAlerta) {
+                if(tempoNotif > 0 && diff <= tempoNotif && diff > (tempoNotif - 2000) && !notificouAlerta) {
                     const minStr = Math.floor(diff / 60000).toString().padStart(2, '0');
                     const secStr = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
                     new Notification("⏰ Próximo Fretado", { 
@@ -545,11 +545,9 @@
                     });
                     notificouAlerta = true;
                 }
-                // Notificação de Partida (em ~2 segundos antes do 0 para garantir trigger)
-                if(diff <= 2000 && diff > 0 && !notificouPartida) {
-                    const horaAtual = hAlvo;
+                if(diff <= 3000 && diff > -1000 && !notificouPartida) {
                     new Notification("Bus Partiu", { 
-                        body: `🚍 O veículo das ${horaAtual} partiu`, 
+                        body: `🚍 O veículo das ${hAlvo} partiu`, 
                         icon: "favicon.png",
                         tag: "partida-fretado"
                     });
@@ -557,11 +555,17 @@
                 }
             }
 
-            if (diff <= 500) {
+            if (diff <= 0) {
                 if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
-                display.innerText = "00:00:00"; timerBox.classList.add('modo-encerrado'); clearInterval(timerInterval);
-                horarioSelecionadoManual = null; ultimoHorarioAlvo = null; setTimeout(gerarLista, 1000); return;
+                display.innerText = "00:00:00"; 
+                timerBox.classList.add('modo-encerrado'); 
+                clearInterval(timerInterval);
+                horarioSelecionadoManual = null; 
+                ultimoHorarioAlvo = null; 
+                setTimeout(gerarLista, 1000); 
+                return;
             }
+
             const hrs = Math.floor(diff / 3600000).toString().padStart(2, '0');
             const min = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
             const sec = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
