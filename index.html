@@ -126,7 +126,14 @@
         .menu-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 2000; }
         .btn-menu-float { width: 56px; height: 56px; background: var(--vivo-purple); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; cursor: pointer; }
         .menu-options { display: none; flex-direction: column; gap: 8px; margin-bottom: 5px; }
-        .menu-options button { background: white; border: 1px solid #ddd; padding: 12px 20px; border-radius: 25px; font-weight: 800; font-family: 'Inter'; color: var(--vivo-purple); box-shadow: var(--shadow); cursor: pointer; white-space: nowrap; font-size: 0.85rem; }
+        
+        .menu-options button { 
+            background: white; border: 1px solid #ddd; padding: 10px 20px; border-radius: 25px; 
+            font-weight: 800; font-family: 'Inter'; color: var(--vivo-purple); box-shadow: var(--shadow); 
+            cursor: pointer; white-space: nowrap; font-size: 0.85rem;
+            display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+        }
+        .menu-options button img { width: 18px; height: 18px; object-fit: contain; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; box-shadow: var(--shadow); position: relative; }
@@ -194,10 +201,10 @@
 
 <div class="menu-container">
     <div id="menu-options" class="menu-options">
-        <button onclick="abrirModal('share-modal')">🔗 Compartilhar</button>
-        <button onclick="abrirModal('notif-modal')">🔔 Notificação</button>
-        <button onclick="abrirLocalizacao()">📍 Localização</button>
-        <button onclick="redefinirApp()">↺ Redefinir</button>
+        <button onclick="abrirModal('share-modal')"><img src="img/opcao_compartilhar.png"> Compartilhar</button>
+        <button onclick="abrirModal('notif-modal')"><img src="img/opcao_notificacao.png"> Notificação</button>
+        <button onclick="abrirLocalizacao()"><img src="img/opcao_localizacao.png"> Localização</button>
+        <button onclick="redefinirApp()"><img src="img/opcao_redefinir.png"> Redefinir</button>
     </div>
     <button class="btn-menu-float" onclick="toggleMenu()">☰</button>
 </div>
