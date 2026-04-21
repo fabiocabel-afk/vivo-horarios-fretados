@@ -30,12 +30,16 @@
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; 
             display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden;
+            padding-top: env(safe-area-inset-top); /* Proteção adicional para o corpo */
         }
         
         .header { 
-            background: var(--vivo-purple); color: white; padding: env(safe-area-inset-top, 20px) 15px 15px; 
+            background: var(--vivo-purple); color: white; 
+            padding: 15px 15px 15px; /* Padding interno fixo */
+            margin-top: 0; 
             text-align: center; font-size: 1.2rem; font-weight: 800; border-radius: 0 0 var(--radius) var(--radius);
             box-shadow: var(--shadow); z-index: 100; flex-shrink: 0;
+            position: relative;
         }
 
         .filter-panel { padding: 15px 15px 10px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
@@ -193,7 +197,7 @@
         <button onclick="abrirModal('share-modal')">🔗 Compartilhar</button>
         <button onclick="abrirModal('notif-modal')">🔔 Notificação</button>
         <button onclick="abrirLocalizacao()">📍 Localização</button>
-        <button onclick="window.location.reload()">↺ Redefinir</button>
+        <button onclick="redefinirApp()">↺ Redefinir</button>
     </div>
     <button class="btn-menu-float" onclick="toggleMenu()">☰</button>
 </div>
@@ -259,6 +263,14 @@
     let notificouPartida = false;
     let ultimoMinutoRenderizado = -1;
     let localizacaoSelecionada = null;
+
+    function redefinirApp() {
+        // Força o scroll para o topo antes de recarregar para evitar travamento da header
+        window.scrollTo(0, 0);
+        setTimeout(() => {
+            window.location.href = window.location.pathname + '?r=' + Math.random();
+        }, 50);
+    }
 
     function toggleMenu() {
         const menu = document.getElementById('menu-options');
