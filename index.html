@@ -83,7 +83,6 @@
             position: relative;
         }
 
-        /* ÍCONE DE NOTIFICAÇÃO ESTILIZADO */
         #notif-indicator { 
             position: absolute; top: 15px; right: 15px; 
             font-size: 1.1rem; display: none; 
@@ -325,7 +324,7 @@
         const iframe = document.getElementById('map-iframe');
         if (localizacaoSelecionada) {
             const l = locais.find(x => x.nome === localizacaoSelecionada);
-            iframe.src = `https://maps.google.com/maps?q=${l.latitude},${l.longitude}&z=17&output=embed`;
+            iframe.src = `https://www.google.com/maps/embed/v1/place?key=SUA_CHAVE&q=${l.latitude},${l.longitude}`;
         } else {
             iframe.src = `about:blank`;
         }
@@ -535,17 +534,20 @@
             const tempoNotif = parseInt(document.getElementById('range-notif').value) * 60000;
             
             if(notifAtiva && isProximoReal && ("Notification" in window) && Notification.permission === "granted") {
-                if(tempoNotif > 0 && diff <= tempoNotif && diff > (tempoNotif - 2000) && !notificouAlerta) {
-                    const minStr = Math.floor(diff / 60000).toString().padStart(2, '0');
-                    const secStr = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                if(tempoNotif > 0 && diff <= (tempoNotif + 2000) && diff > (tempoNotif - 2000) && !notificouAlerta) {
                     new Notification("⏰ Próximo Fretado", { 
-                        body: `O próximo veículo sai em ${minStr}:${secStr}`, 
+                        body: `O próximo veículo sai em breve`, 
                         icon: "favicon.png",
                         tag: "alerta-fretado"
                     });
                     notificouAlerta = true;
                 }
-                if(diff <= 3000 && diff > -1000 && !notificouPartida) {
+            }
+
+            if (diff <= 0) {
+                if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
+                
+                if(notifAtiva && isProximoReal && ("Notification" in window) && Notification.permission === "granted" && !notificouPartida) {
                     new Notification("Bus Partiu", { 
                         body: `🚍 O veículo das ${hAlvo} partiu`, 
                         icon: "favicon.png",
@@ -553,10 +555,7 @@
                     });
                     notificouPartida = true;
                 }
-            }
 
-            if (diff <= 0) {
-                if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
                 display.innerText = "00:00:00"; 
                 timerBox.classList.add('modo-encerrado'); 
                 clearInterval(timerInterval);
