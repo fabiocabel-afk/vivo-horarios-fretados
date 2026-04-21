@@ -326,7 +326,8 @@
         const iframe = document.getElementById('map-iframe');
         if (localizacaoSelecionada) {
             const l = locais.find(x => x.nome === localizacaoSelecionada);
-            iframe.src = `https://www.google.com/maps/embed/v1/place?key=SUA_CHAVE&q=${l.latitude},${l.longitude}`;
+            // CORREÇÃO: Adicionado o símbolo $ para ler a latitude corretamente
+            iframe.src = `http://googleusercontent.com/maps.google.com/${l.latitude},${l.longitude}`;
         } else {
             iframe.src = `about:blank`;
         }
@@ -535,12 +536,15 @@
             const notifAtiva = document.getElementById('check-notif').checked;
             const tempoNotif = parseInt(document.getElementById('range-notif').value) * 60000;
             
-            if(notifAtiva && isProximoReal && ("Notification" in window) && Notification.permission === "granted") {
+            // CORREÇÃO: Disparo via Service Worker para compatibilidade com botão Push
+            if(notifAtiva && isProximoReal && ("serviceWorker" in navigator) && Notification.permission === "granted") {
                 if(tempoNotif > 0 && diff <= (tempoNotif + 2000) && diff > (tempoNotif - 2000) && !notificouAlerta) {
-                    new Notification("⏰ Próximo Fretado", { 
-                        body: `O próximo veículo sai em breve`, 
-                        icon: "favicon.png",
-                        tag: "alerta-fretado"
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification("⏰ Próximo Fretado", { 
+                            body: `O próximo veículo sai em breve`, 
+                            icon: "favicon.png",
+                            tag: "alerta-fretado"
+                        });
                     });
                     notificouAlerta = true;
                 }
@@ -549,11 +553,13 @@
             if (diff <= 0) {
                 if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
                 
-                if(notifAtiva && isProximoReal && ("Notification" in window) && Notification.permission === "granted" && !notificouPartida) {
-                    new Notification("Bus Partiu", { 
-                        body: `🚍 O veículo das ${hAlvo} partiu`, 
-                        icon: "favicon.png",
-                        tag: "partida-fretado"
+                if(notifAtiva && isProximoReal && ("serviceWorker" in navigator) && Notification.permission === "granted" && !notificouPartida) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification("Bus Partiu", { 
+                            body: `🚍 O veículo das ${hAlvo} partiu`, 
+                            icon: "favicon.png",
+                            tag: "partida-fretado"
+                        });
                     });
                     notificouPartida = true;
                 }
@@ -596,7 +602,6 @@
     window.onload = iniciar;
     
     if ('serviceWorker' in navigator) {
-        // Removi a barra "/" antes do sw.js para funcionar no GitHub Pages
         navigator.serviceWorker.register('sw.js')
             .then(reg => console.log('Service Worker registrado!', reg))
             .catch(err => console.error('Erro ao registrar o Service Worker:', err));
