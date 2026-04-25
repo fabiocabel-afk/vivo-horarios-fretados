@@ -1,28 +1,78 @@
 // sw.js
-self.addEventListener('install', event => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+// =====================================================
+// Service Worker para Push Notification REAL
+// Compatível com tela bloqueada / app fechado
+// =====================================================
 
-// Escuta mensagens enviadas pelo index.html
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
-        const delay = event.data.delay;
-        const title = event.data.title;
-        const options = event.data.options;
-
-        // O setTimeout dentro do SW é mais estável que na aba, 
-        // mas ainda pode ser limitado pelo sistema operativo.
-        setTimeout(() => {
-            self.registration.showNotification(title, options);
-        }, delay);
-    }
+// Força atualização imediata do SW
+self.addEventListener('install', event => {
+  self.skipWaiting();
 });
 
+// Assume o controle das abas abertas
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
+
+// =====================================================
+// ✅ RECEBIMENTO DO PUSH (NÚCLEO DA SOLUÇÃO)
+// =====================================================
+self.addEventListener('push', event => {
+  let data = {};
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { body: event.data.text() };
+    }
+  }
+
+  const title = data.title || 'Vivo Transporte';
+
+  const options = {
+    body: data.body || '',
+    icon: 'favicon.png',
+    badge: 'favicon.png',
+    vibrate: [200, 100, 200],
+    tag: 'alerta-fretado',
+    renotify: true,
+    data: {
+      url: data.url || '/'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+// =====================================================
+// ✅ CLICK NA NOTIFICAÇÃO
+// =====================================================
 self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    event.waitUntil(
-        clients.matchAll({ type: 'window' }).then(clientList => {
-            if (clientList.length > 0) return clientList[0].focus();
-            return clients.openWindow('/');
-        })
-    );
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })
+  );
+});
+
+// =====================================================
+// (Opcional) Fecha notificação automaticamente
+// =====================================================
+self.addEventListener('notificationclose', event => {
+  // Ponto de extensão futuro (logs, analytics, etc.)
 });
