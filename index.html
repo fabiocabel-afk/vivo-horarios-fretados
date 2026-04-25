@@ -286,9 +286,102 @@
     </div>
 </div>
 
-<script src="data/horarios.js"></script>
-<script src="data/feriados.js"></script>
-<script src="data/localidade.js"></script>
+<script src="data/horarios.js">
+
+// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
+async function registrarPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
+  });
+  enviarSubscriptionParaServidor(subscription);
+}
+
+function enviarSubscriptionParaServidor(subscription) {
+  fetch('https://SEU_BACKEND/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription)
+  }).catch(() => console.log('Backend de push ainda não configurado'));
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+// ===== FIM PUSH =====
+
+</script>
+<script src="data/feriados.js">
+
+// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
+async function registrarPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
+  });
+  enviarSubscriptionParaServidor(subscription);
+}
+
+function enviarSubscriptionParaServidor(subscription) {
+  fetch('https://SEU_BACKEND/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription)
+  }).catch(() => console.log('Backend de push ainda não configurado'));
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+// ===== FIM PUSH =====
+
+</script>
+<script src="data/localidade.js">
+
+// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
+async function registrarPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
+  });
+  enviarSubscriptionParaServidor(subscription);
+}
+
+function enviarSubscriptionParaServidor(subscription) {
+  fetch('https://SEU_BACKEND/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription)
+  }).catch(() => console.log('Backend de push ainda não configurado'));
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+// ===== FIM PUSH =====
+
+</script>
 
 <script>
     let db = {};
@@ -382,7 +475,9 @@
         document.getElementById('notif-indicator-val').innerText = tempRange + " min";
         
         notificouAlerta = false; 
-        fecharModal('notif-modal');
+        if (tempCheck) { registrarPush(); }
+
+  fecharModal('notif-modal');
     }
 
     function abrirLocalizacao() {
@@ -691,6 +786,37 @@
             .then(reg => console.log('SW OK'))
             .catch(err => console.log('SW Erro', err));
     }
+
+
+// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
+async function registrarPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
+  });
+  enviarSubscriptionParaServidor(subscription);
+}
+
+function enviarSubscriptionParaServidor(subscription) {
+  fetch('https://SEU_BACKEND/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription)
+  }).catch(() => console.log('Backend de push ainda não configurado'));
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+// ===== FIM PUSH =====
+
 </script>
 </body>
 </html>
