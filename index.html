@@ -126,8 +126,15 @@
         .horario-card.proximo-fretado-sempre { background: var(--vivo-green) !important; color: white !important; border: none !important; font-weight: 800 !important; }
         .badge-status { position: absolute; right: 15px; font-size: 0.6rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; }
         
-        /* Nova classe estilizada para os índices marginais à esquerda */
-        .card-index { position: absolute; left: 15px; font-size: 0.85rem; font-weight: 600; color: inherit; }
+        /* Nova classe estilizada para os índices marginais à esquerda com efeito marca d'água */
+        .card-index { 
+            position: absolute; 
+            left: 15px; 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            color: inherit; 
+            opacity: 0.3; /* Deixa o indicador como marca d'água por padrão */
+        }
 
         .menu-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 2000; }
         .btn-menu-float { width: 56px; height: 56px; background: var(--vivo-purple); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; cursor: pointer; }
@@ -319,7 +326,7 @@
                 delay: tempoMs,
                 title: titulo,
                 options: {
-                    body: mensagem,
+                    body: messaging,
                     icon: 'favicon.png',
                     vibrate: [1000],
                     tag: 'alerta-fretado',
@@ -607,6 +614,12 @@
             const idxSpan = document.createElement('span');
             idxSpan.className = 'card-index';
             idxSpan.innerText = index + 1;
+
+            // Altera a opacidade para 1 apenas se o item correspondente estiver selecionado/ativo
+            if ((h === alvoFinal && ehHoje) || (!ehHoje && h === horarioSelecionadoManual)) {
+                idxSpan.style.opacity = "1";
+            }
+            
             card.appendChild(idxSpan);
 
             const [hr, min] = h.split(':');
