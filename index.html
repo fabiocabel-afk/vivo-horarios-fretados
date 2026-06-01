@@ -11,7 +11,7 @@
 
     <meta property="og:type" content="website">
     <meta property="og:title" content="Vivo - Horários Fretados">
-    <meta property="og:description" content="Consulte os horários dos fretados (Borba Gato / Granja Julieta / Telefônica).">
+    <meta property="og:description" content="Consulte os horários dos fretados (Borba Gato / Morumbi / Telefônica).">
     <meta property="og:url" content="https://vivo61991-tech.github.io/vivo-horario-fretado/">
     <meta property="og:image" content="https://vivo61991-tech.github.io/vivo-horario-fretado/favicon.png">
     <meta property="og:image:width" content="300">
@@ -63,6 +63,7 @@
             width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
             font-size: 1.1rem; color: var(--vivo-purple); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; 
         }
+        .btn-inverter img { width: 100%; height: 100%; object-fit: contain; }
 
         .row { display: flex; gap: 10px; }
 
@@ -76,7 +77,7 @@
         #select-destino { padding: 0 40px 0 10px; text-align: right; background-position: calc(100% - 10px) center !important; }
 
         select[data-local="BORBA GATO"] { background-image: url('img/borba_gato.png'); }
-        select[data-local="GRANJA JULIETA"] { background-image: url('img/granja_julieta.png'); }
+        select[data-local="MORUMBI"] { background-image: url('img/morumbi.png'); }
         select[data-local="TELEFONICA"] { background-image: url('img/telefonica.png'); }
 
         .feriado-toggle { 
@@ -98,11 +99,11 @@
 
         #notif-indicator { 
             position: absolute; top: 12px; right: 15px; 
-            display: none; flex-direction: column; align-items: center;
+            display: flex; flex-direction: column; align-items: center;
             cursor: pointer;
         }
 
-        #notif-indicator span:first-child { font-size: 1.2rem; filter: brightness(0) invert(1); line-height: 1; }
+        #notif-indicator img { width: 22px; height: 22px; object-fit: contain; }
         #notif-indicator-val { font-size: 0.6rem; font-weight: 600; opacity: 0.9; margin-top: 2px; }
 
         .timer-container.modo-real { background: linear-gradient(135deg, #82ad2b, var(--vivo-green)) !important; }
@@ -124,6 +125,9 @@
         .horario-card.selecionado { border: 2.5px solid var(--vivo-purple); background: #f3ebff; color: var(--vivo-purple); }
         .horario-card.proximo-fretado-sempre { background: var(--vivo-green) !important; color: white !important; border: none !important; font-weight: 800 !important; }
         .badge-status { position: absolute; right: 15px; font-size: 0.6rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; }
+        
+        /* Nova classe estilizada para os índices marginais à esquerda */
+        .card-index { position: absolute; left: 15px; font-size: 0.85rem; font-weight: 600; color: inherit; }
 
         .menu-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 2000; }
         .btn-menu-float { width: 56px; height: 56px; background: var(--vivo-purple); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; cursor: pointer; }
@@ -167,9 +171,13 @@
         .btn-copy { background: var(--vivo-purple); color: white; }
         .btn-close { background: #f5f5f5; color: #666; }
         
-        .location-modal-content { padding: 0; overflow: hidden; max-width: 350px; }
-        #map-container { width: 100%; height: 200px; background: #eee; }
-        .location-list { max-height: 280px; overflow-y: auto; padding: 10px; background: white; }
+        /* Ajustes finos do modal de Localização Dividida (Street View + Mapa) */
+        .location-modal-content { padding: 0; overflow: hidden; max-width: 360px; width: 90%; }
+        .split-view-container { display: flex; flex-direction: column; width: 100%; height: 260px; background: #eee; }
+        .view-frame { flex: 1; width: 100%; height: 50%; border: none; }
+        .street-view-divider { height: 2px; background: var(--vivo-purple); width: 100%; z-index: 5; }
+        
+        .location-list { max-height: 220px; overflow-y: auto; padding: 10px; background: white; }
         .location-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; border-radius: 10px; margin-bottom: 5px; }
         .location-item.selected { background: #f3ebff; border: 2px solid var(--vivo-purple); }
         .location-info { text-align: left; }
@@ -194,7 +202,7 @@
             <span class="label-select">▲ Embarque</span>
             <select id="select-partida" onchange="resetECarregar()"></select>
         </div>
-        <button class="btn-inverter" onclick="inverterSelecao()">⇆</button>
+        <button class="btn-inverter" onclick="inverterSelecao()"><img src="img/bt_transicao.png" alt="Inverter"></button>
         <div class="select-wrapper">
             <span class="label-select" style="text-align: right; margin-right: 4px;">Desembarque ▼</span>
             <select id="select-destino" onchange="resetECarregar()"></select>
@@ -208,8 +216,8 @@
 
 <div id="timer-box" class="timer-container">
     <div id="notif-indicator" onclick="abrirModal('notif-modal')">
-        <span>🔔</span>
-        <span id="notif-indicator-val">0 min</span>
+        <img id="notif-icon-img" src="img/bt_notification_off.png" alt="Notificação">
+        <span id="notif-indicator-val">off</span>
     </div> 
     <div class="timer-label" id="timer-status">Próximo Horário:</div>
     <span id="data-hora-info" style="display: block; font-size: 0.9rem; margin-top: 5px; opacity: 0.9;"></span>
@@ -278,110 +286,19 @@
         <div class="modal-header-title" style="padding: 20px 20px 0; margin-bottom: 10px;">
             <img src="img/opcao_localizacao.png"> Localização
         </div>
-        <div id="map-container">
-            <iframe id="map-iframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+        <div class="split-view-container">
+            <iframe id="street-view-iframe" class="view-frame" allowfullscreen></iframe>
+            <div class="street-view-divider"></div>
+            <iframe id="map-iframe" class="view-frame" frameborder="0" style="border:0;" allowfullscreen></iframe>
         </div>
         <div class="location-list" id="location-list-container"></div>
         <button class="btn-modal btn-close location-btn-close" onclick="fecharModal('location-modal')">Fechar</button>
     </div>
 </div>
 
-<script src="data/horarios.js">
-
-// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
-async function registrarPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return;
-  const reg = await navigator.serviceWorker.ready;
-  const subscription = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
-  });
-  enviarSubscriptionParaServidor(subscription);
-}
-
-function enviarSubscriptionParaServidor(subscription) {
-  fetch('https://SEU_BACKEND/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subscription)
-  }).catch(() => console.log('Backend de push ainda não configurado'));
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-// ===== FIM PUSH =====
-
-</script>
-<script src="data/feriados.js">
-
-// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
-async function registrarPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return;
-  const reg = await navigator.serviceWorker.ready;
-  const subscription = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
-  });
-  enviarSubscriptionParaServidor(subscription);
-}
-
-function enviarSubscriptionParaServidor(subscription) {
-  fetch('https://SEU_BACKEND/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subscription)
-  }).catch(() => console.log('Backend de push ainda não configurado'));
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-// ===== FIM PUSH =====
-
-</script>
-<script src="data/localidade.js">
-
-// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
-async function registrarPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return;
-  const reg = await navigator.serviceWorker.ready;
-  const subscription = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
-  });
-  enviarSubscriptionParaServidor(subscription);
-}
-
-function enviarSubscriptionParaServidor(subscription) {
-  fetch('https://SEU_BACKEND/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subscription)
-  }).catch(() => console.log('Backend de push ainda não configurado'));
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-// ===== FIM PUSH =====
-
-</script>
+<script src="data/horarios.js"></script>
+<script src="data/feriados.js"></script>
+<script src="data/localidade.js"></script>
 
 <script>
     let db = {};
@@ -404,8 +321,9 @@ function urlBase64ToUint8Array(base64String) {
                 options: {
                     body: mensagem,
                     icon: 'favicon.png',
-                    vibrate: [200, 100, 200],
-                    tag: 'alerta-fretado'
+                    vibrate: [1000],
+                    tag: 'alerta-fretado',
+                    renotify: true
                 }
             });
         }
@@ -470,20 +388,23 @@ function urlBase64ToUint8Array(base64String) {
         document.getElementById('check-notif').checked = tempCheck;
         document.getElementById('range-notif').value = tempRange;
         
-        const indicator = document.getElementById('notif-indicator');
-        indicator.style.display = tempCheck ? 'flex' : 'none';
-        document.getElementById('notif-indicator-val').innerText = tempRange + " min";
+        const notifIconImg = document.getElementById('notif-icon-img');
+        if (tempCheck) {
+            notifIconImg.src = "img/bt_notification_on.png";
+            document.getElementById('notif-indicator-val').innerText = tempRange + " min";
+        } else {
+            notifIconImg.src = "img/bt_notification_off.png";
+            document.getElementById('notif-indicator-val').innerText = "off";
+        }
         
         notificouAlerta = false; 
-        if (tempCheck) { registrarPush(); }
-
-  fecharModal('notif-modal');
+        fecharModal('notif-modal');
     }
 
     function abrirLocalizacao() {
-        const atual = document.getElementById('select-partida').value;
+        const abrir_local = document.getElementById('select-partida').value;
         abrirModal('location-modal');
-        renderizarListaLocalidades(atual);
+        renderizarListaLocalidades(abrir_local);
     }
 
     function renderizarListaLocalidades(selecionado) {
@@ -506,18 +427,25 @@ function urlBase64ToUint8Array(base64String) {
             item.onclick = () => renderizarListaLocalidades(localizacaoSelecionada === loc.nome ? null : loc.nome);
             container.appendChild(item);
         });
-        atualizarMapa();
+        atualizarVisualizacaoMapas();
     }
 
-    function atualizarMapa() {
-        const iframe = document.getElementById('map-iframe');
+    function atualizarVisualizacaoMapas() {
+        const mapIframe = document.getElementById('map-iframe');
+        const streetIframe = document.getElementById('street-view-iframe');
+        
         if (localizacaoSelecionada) {
-            const l = locais.find(x => x.nome === localizacaoSelecionada);
-            const lat = l.latitude;
-            const lon = l.longitude;
-            iframe.src = `https://maps.google.com/maps?q=${lat},${lon}&z=18&output=embed`;
+            const localObj = locais.find(x => x.nome === localizacaoSelecionada);
+            
+            let coordTratada = localObj.coordenadas.replace('@', '');
+            let partesCoord = coordTratada.split(',');
+            let latLngPura = `${partesCoord[0]},${partesCoord[1]}`;
+            
+            mapIframe.src = `https://maps.google.com/maps?q=${latLngPura}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
+            streetIframe.src = `https://maps.google.com/maps?layer=c&cbll=${latLngPura}&cbp=12,0,0,0,0&source=browser&output=svembed`;
         } else {
-            iframe.src = `about:blank`;
+            mapIframe.src = `about:blank`;
+            streetIframe.src = `about:blank`;
         }
     }
 
@@ -649,26 +577,38 @@ function urlBase64ToUint8Array(base64String) {
         const infoDH = document.getElementById('data-hora-info');
         const diaFormatado = dataInput.split('-').slice(1).reverse().join('/');
         
+        // Mapeia os índices do alvo e o total para exibição no timer
+        const totalHorarios = horarios.length;
+        const indiceAlvo = alvoFinal ? (horarios.indexOf(alvoFinal) + 1) : 0;
+        const sufixoContador = totalHorarios > 0 && indiceAlvo > 0 ? ` ${indiceAlvo}/${totalHorarios}` : "";
+
         if (ehHoje) {
             if (horarioSelecionadoManual && horarioSelecionadoManual !== proximoAuto) {
                 timerBox.classList.remove('modo-real');
-                document.getElementById('timer-status').innerText = "Horário Selecionado:";
+                document.getElementById('timer-status').innerText = "Horário Selecionado:" + sufixoContador;
                 infoDH.innerText = `${diaFormatado} às ${horarioSelecionadoManual}`;
             } else {
                 timerBox.classList.add('modo-real');
-                document.getElementById('timer-status').innerText = "Próximo Horário:";
+                document.getElementById('timer-status').innerText = "Próximo Horário:" + sufixoContador;
                 infoDH.innerText = ""; 
             }
         } else {
             timerBox.classList.remove('modo-real');
-            document.getElementById('timer-status').innerText = "Horário Selecionado:";
+            document.getElementById('timer-status').innerText = "Horário Selecionado:" + sufixoContador;
             infoDH.innerText = alvoFinal ? `${diaFormatado} às ${alvoFinal}` : `${diaFormatado}`;
         }
         
-        horarios.forEach(h => {
+        horarios.forEach((h, index) => {
             const card = document.createElement('div');
             card.className = 'horario-card';
             card.innerText = h;
+            
+            // Inserção do indicador de número sequencial do lado esquerdo do card
+            const idxSpan = document.createElement('span');
+            idxSpan.className = 'card-index';
+            idxSpan.innerText = index + 1;
+            card.appendChild(idxSpan);
+
             const [hr, min] = h.split(':');
             const hV = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), parseInt(hr), parseInt(min), 0, 0);
             if (ehHoje && hV <= agoraLimpo) card.classList.add('passado');
@@ -786,37 +726,6 @@ function urlBase64ToUint8Array(base64String) {
             .then(reg => console.log('SW OK'))
             .catch(err => console.log('SW Erro', err));
     }
-
-
-// ===== PUSH NOTIFICATION (ADICIONADO – NÃO ALTERA LÓGICA EXISTENTE) =====
-async function registrarPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return;
-  const reg = await navigator.serviceWorker.ready;
-  const subscription = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array('SUA_CHAVE_PUBLICA_VAPID_AQUI')
-  });
-  enviarSubscriptionParaServidor(subscription);
-}
-
-function enviarSubscriptionParaServidor(subscription) {
-  fetch('https://SEU_BACKEND/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subscription)
-  }).catch(() => console.log('Backend de push ainda não configurado'));
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-// ===== FIM PUSH =====
-
 </script>
 </body>
 </html>
