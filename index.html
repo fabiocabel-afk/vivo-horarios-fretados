@@ -126,14 +126,13 @@
         .horario-card.proximo-fretado-sempre { background: var(--vivo-green) !important; color: white !important; border: none !important; font-weight: 800 !important; }
         .badge-status { position: absolute; right: 15px; font-size: 0.6rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; }
         
-        /* Nova classe estilizada para os índices marginais à esquerda com efeito marca d'água */
         .card-index { 
             position: absolute; 
             left: 15px; 
             font-size: 0.85rem; 
             font-weight: 600; 
             color: inherit; 
-            opacity: 0.3; /* Deixa o indicador como marca d'água por padrão */
+            opacity: 0.3; 
         }
 
         .menu-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 2000; }
@@ -178,7 +177,6 @@
         .btn-copy { background: var(--vivo-purple); color: white; }
         .btn-close { background: #f5f5f5; color: #666; }
         
-        /* Ajustes finos do modal de Localização Dividida (Street View + Mapa) */
         .location-modal-content { padding: 0; overflow: hidden; max-width: 360px; width: 90%; }
         .split-view-container { display: flex; flex-direction: column; width: 100%; height: 260px; background: #eee; }
         .view-frame { flex: 1; width: 100%; height: 50%; border: none; }
@@ -250,8 +248,8 @@
             <img src="img/opcao_compartilhar.png"> Compartilhar
         </div>
         <img src="img/qrcode.png" alt="QR Code" class="qr-code-img">
-        <button class="btn-modal btn-copy" onclick="copiarLink()">Copiar Link</button>
-        <div id="copy-toast">link copiado</div>
+        <button class="btn-modal btn-copy" onclick="copiarLink()">Copiar Link do App</button>
+        <div id="copy-toast">Link copiado com sucesso!</div>
         <button class="btn-modal btn-close" onclick="fecharModal('share-modal')">Fechar</button>
     </div>
 </div>
@@ -259,58 +257,50 @@
 <div id="notif-modal" class="modal-overlay" onclick="fecharAoClicarFora(event)">
     <div class="modal-content">
         <div class="modal-header-title">
-            <img src="img/opcao_notificacao.png"> Notificação
+            <img src="img/opcao_notificacao.png"> Notificações
         </div>
         <div class="notification-config">
             <div class="notif-row">
-                <span style="font-weight: 700; color: var(--text-main);">Ativar Notificações</span>
-                <label class="feriado-toggle" style="flex: none; border: none; padding: 0; height: auto; background: transparent;">
+                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">Ativar Notificação</span>
+                <div class="feriado-toggle" style="border:none; padding:0; justify-content:flex-end; height:auto;">
                     <input type="checkbox" id="check-notif-temp" onchange="toggleNotifSliderTemp()">
-                </label>
+                </div>
             </div>
             <div id="slider-box-temp" class="slider-container">
                 <div class="slider-label">
-                    <span>Antecedência</span>
-                    <span id="val-notif-temp">0 min</span>
+                    <span>ANTECEDÊNCIA</span>
+                    <span id="val-notif-temp">5 min</span>
                 </div>
-                <input type="range" id="range-notif-temp" min="0" max="10" value="0" step="1" oninput="document.getElementById('val-notif-temp').innerText = this.value + ' min'">
-                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #999;">
-                    <span>Partida</span>
-                    <span>10 min</span>
-                </div>
+                <input type="range" id="range-notif-temp" min="1" max="15" value="5" oninput="document.getElementById('val-notif-temp').innerText = this.value + ' min'">
             </div>
         </div>
-        <button class="btn-modal btn-aplicar" onclick="aplicarNotificacao()">Aplicar</button>
-        <button class="btn-modal btn-close" onclick="fecharModal('notif-modal')">Fechar</button>
+        <button class="btn-modal btn-aplicar" onclick="aplicarNotificacao()">Aplicar Configuração</button>
+        <button class="btn-modal btn-close" onclick="fecharModal('notif-modal')">Cancelar</button>
     </div>
 </div>
 
-<input type="checkbox" id="check-notif" style="display:none">
-<input type="range" id="range-notif" style="display:none" value="0">
-
 <div id="location-modal" class="modal-overlay" onclick="fecharAoClicarFora(event)">
-    <div class="modal-content location-modal-content">
-        <div class="modal-header-title" style="padding: 20px 20px 0; margin-bottom: 10px;">
-            <img src="img/opcao_localizacao.png"> Localização
-        </div>
+    <div class="location-modal-content modal-content">
         <div class="split-view-container">
-            <iframe id="street-view-iframe" class="view-frame" allowfullscreen></iframe>
+            <iframe id="street-view-iframe" class="view-frame" allow="fullscreen"></iframe>
             <div class="street-view-divider"></div>
-            <iframe id="map-iframe" class="view-frame" frameborder="0" style="border:0;" allowfullscreen></iframe>
+            <iframe id="map-iframe" class="view-frame" allow="fullscreen"></iframe>
         </div>
-        <div class="location-list" id="location-list-container"></div>
+        <div class="location-list" id="lista-locais-container"></div>
         <button class="btn-modal btn-close location-btn-close" onclick="fecharModal('location-modal')">Fechar</button>
     </div>
 </div>
 
+<input type="checkbox" id="check-notif" style="display:none;">
+<input type="range" id="range-notif" style="display:none;" min="1" max="15" value="5">
+
 <script src="data/horarios.js"></script>
 <script src="data/feriados.js"></script>
 <script src="data/localidade.js"></script>
-
 <script>
     let db = {};
     let horarioSelecionadoManual = null;
-    let ultimoHorarioAlvo = null; 
+    let ultimoHorarioAlvo = null;
     let vibrouTresMinutos = false;
     let vibrouUmMinuto = false;
     let vibrouChegada = false;
@@ -326,7 +316,7 @@
                 delay: tempoMs,
                 title: titulo,
                 options: {
-                    body: messaging,
+                    body: mensagem,
                     icon: 'favicon.png',
                     vibrate: [1000],
                     tag: 'alerta-fretado',
@@ -347,7 +337,6 @@
         const menu = document.getElementById('menu-options');
         const overlay = document.getElementById('menu-overlay-bg');
         const isOpen = menu.style.display === 'flex';
-        
         menu.style.display = isOpen ? 'none' : 'flex';
         overlay.style.display = isOpen ? 'none' : 'block';
     }
@@ -356,17 +345,13 @@
         document.getElementById(id).style.display = 'flex';
         document.getElementById('menu-options').style.display = 'none';
         document.getElementById('menu-overlay-bg').style.display = 'none';
-
         if(id === 'notif-modal') {
             const realCheck = document.getElementById('check-notif');
             const realRange = document.getElementById('range-notif');
-            
             document.getElementById('check-notif-temp').checked = realCheck.checked;
             document.getElementById('range-notif-temp').value = realRange.value;
             document.getElementById('val-notif-temp').innerText = realRange.value + " min";
-            
             toggleNotifSliderTemp();
-
             if("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission();
             }
@@ -391,63 +376,64 @@
     function aplicarNotificacao() {
         const tempCheck = document.getElementById('check-notif-temp').checked;
         const tempRange = document.getElementById('range-notif-temp').value;
-        
         document.getElementById('check-notif').checked = tempCheck;
         document.getElementById('range-notif').value = tempRange;
         
-        const notifIconImg = document.getElementById('notif-icon-img');
+        const indicator = document.getElementById('notif-indicator');
+        const imgInd = document.getElementById('notif-icon-img');
+        const valInd = document.getElementById('notif-indicator-val');
+        
         if (tempCheck) {
-            notifIconImg.src = "img/bt_notification_on.png";
-            document.getElementById('notif-indicator-val').innerText = tempRange + " min";
+            imgInd.src = "img/bt_notification_on.png";
+            valInd.innerText = tempRange + " min";
         } else {
-            notifIconImg.src = "img/bt_notification_off.png";
-            document.getElementById('notif-indicator-val').innerText = "off";
+            imgInd.src = "img/bt_notification_off.png";
+            valInd.innerText = "off";
         }
         
-        notificouAlerta = false; 
+        notificouAlerta = false;
         fecharModal('notif-modal');
     }
 
     function abrirLocalizacao() {
-        const abrir_local = document.getElementById('select-partida').value;
+        const atual = document.getElementById('select-partida').value;
         abrirModal('location-modal');
-        renderizarListaLocalidades(abrir_local);
+        renderizarLocais(atual);
     }
 
-    function renderizarListaLocalidades(selecionado) {
-        const container = document.getElementById('location-list-container');
-        container.innerHTML = '';
-        localizacaoSelecionada = selecionado;
-        const ordenados = [...locais].sort((a, b) => a.nome.localeCompare(b.nome));
-        ordenados.forEach(loc => {
-            const isSelected = loc.nome === localizacaoSelecionada;
+    function renderizarLocais(selecionado) {
+        const container = document.getElementById('lista-horarios'); 
+        const containerLocais = document.getElementById('lista-locais-container');
+        containerLocais.innerHTML = "";
+        
+        if (!localizacaoSelecionada) {
+            localizacaoSelecionada = selecionado;
+        }
+        
+        locais.forEach(l => {
             const item = document.createElement('div');
-            item.className = `location-item ${isSelected ? 'selected' : ''}`;
-            const icon = loc.nome.toLowerCase().replace(' ', '_') + '.png';
+            item.className = "location-item" + (l.nome === localizacaoSelecionada ? " selected" : "");
             item.innerHTML = `
                 <div class="location-info">
-                    <span class="loc-nome">${loc.nome}</span>
-                    <span class="loc-end">${loc.endereco}</span>
+                    <span class="loc-nome">${l.nome}</span>
+                    <span class="loc-end">${l.endereco}</span>
                 </div>
-                <img src="img/${icon}" class="loc-icon">
+                <img class="loc-icon" src="img/loc_${l.nome.toLowerCase().replace(' ', '_')}.png" onerror="this.src='img/opcao_localizacao.png'">
             `;
-            item.onclick = () => renderizarListaLocalidades(localizacaoSelecionada === loc.nome ? null : loc.nome);
-            container.appendChild(item);
+            item.onclick = () => {
+                localizacaoSelecionada = l.nome;
+                renderizarLocais(selecionado);
+            };
+            containerLocais.appendChild(item);
         });
-        atualizarVisualizacaoMapas();
-    }
-
-    function atualizarVisualizacaoMapas() {
+        
         const mapIframe = document.getElementById('map-iframe');
         const streetIframe = document.getElementById('street-view-iframe');
-        
         if (localizacaoSelecionada) {
             const localObj = locais.find(x => x.nome === localizacaoSelecionada);
-            
             let coordTratada = localObj.coordenadas.replace('@', '');
             let partesCoord = coordTratada.split(',');
             let latLngPura = `${partesCoord[0]},${partesCoord[1]}`;
-            
             mapIframe.src = `https://maps.google.com/maps?q=${latLngPura}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
             streetIframe.src = `https://maps.google.com/maps?layer=c&cbll=${latLngPura}&cbp=12,0,0,0,0&source=browser&output=svembed`;
         } else {
@@ -471,25 +457,24 @@
         organizarDados();
         const pSelReal = document.getElementById('select-partida');
         const dSelReal = document.getElementById('select-destino');
+        
         Object.keys(db).forEach(p => pSelReal.options.add(new Option(p, p)));
         
         const agora = new Date();
         const horaMinutoAtual = (agora.getHours() * 100) + agora.getMinutes();
-        let localidadePreferida = localStorage.getItem('localidade_base') || "BORBA GATO";
         
+        let localidadePreferida = localStorage.getItem('localidade_base') || "BORBA GATO";
         const isFeriado = FERIADOS_FIXOS.includes(`${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`);
         let filtroDia = isFeriado ? "Feriado" : (agora.getDay() === 0 ? "Domingo" : (agora.getDay() === 6 ? "Sábado" : "Dia Útil"));
-
-        const horariosIda = (db[localidadePreferida] && db[localidadePreferida]["TELEFONICA"]) 
-                            ? (db[localidadePreferida]["TELEFONICA"][filtroDia] || []) 
-                            : [];
-
-        let horarioCorte = 1430; 
+        
+        const horariosIda = (db[localidadePreferida] && db[localidadePreferida]["TELEFONICA"]) ? (db[localidadePreferida]["TELEFONICA"][filtroDia] || []) : [];
+        let horarioCorte = 1430;
         if (horariosIda.length > 0) {
-            const ultimoHorarioStr = horariosIda[horariosIda.length - 1];
-            horarioCorte = parseInt(ultimoHorarioStr.replace(':', ''));
+            const ultimoIda = horariosIda[horariosIda.length - 1];
+            const [hU, mU] = ultimoIda.split(':');
+            horarioCorte = (parseInt(hU) * 100) + parseInt(mU);
         }
-
+        
         if (horaMinutoAtual <= horarioCorte) {
             pSelReal.value = localidadePreferida;
             atualizarDestinos();
@@ -502,56 +487,83 @@
         
         pSelReal.setAttribute('data-local', pSelReal.value);
         dSelReal.setAttribute('data-local', dSelReal.value);
-
+        
         resetarDataHoje();
-    }
-
-    function inverterSelecao() {
-        const pSel = document.getElementById('select-partida');
-        const dSel = document.getElementById('select-destino');
-        const pVal = pSel.value; const dVal = dSel.value;
-        pSel.value = dVal; atualizarDestinos(); dSel.value = pVal;
-        resetECarregar();
-    }
-
-    function resetECarregar() {
-        horarioSelecionadoManual = null; ultimoHorarioAlvo = null;
-        limparSinais(); atualizarDestinos(); salvarPreferencias();
     }
 
     function atualizarDestinos() {
         const partida = document.getElementById('select-partida').value;
-        const dSel = document.getElementById('select-destino');
-        const dAtual = dSel.value;
-        dSel.innerHTML = ''; 
-        if (partida && db[partida]) {
-            const destinos = Object.keys(db[partida]);
-            destinos.forEach(d => dSel.options.add(new Option(d, d)));
-            dSel.value = destinos.includes(dAtual) ? dAtual : dSel.options[0].value;
+        const dSelReal = document.getElementById('select-destino');
+        const antigoDestino = dSelReal.value;
+        dSelReal.innerHTML = "";
+        
+        if (db[partida]) {
+            Object.keys(db[partida]).forEach(d => dSelReal.options.add(new Option(d, d)));
         }
-        document.getElementById('select-partida').setAttribute('data-local', partida);
-        document.getElementById('select-destino').setAttribute('data-local', dSel.value);
+        if (antigoDestino && [...dSelReal.options].some(o => o.value === antigoDestino)) {
+            dSelReal.value = antigoDestino;
+        }
+    }
+
+    function inverterSelecao() {
+        const p = document.getElementById('select-partida');
+        const d = document.getElementById('select-destino');
+        const valP = p.value;
+        const valD = d.value;
+        
+        p.value = valD;
+        atualizarDestinos();
+        d.value = valP;
+        
+        p.setAttribute('data-local', p.value);
+        d.setAttribute('data-local', d.value);
+        
+        horarioSelecionadoManual = null;
+        ultimoHorarioAlvo = null;
+        limparSinais();
+        salvarPreferencias();
+        gerarLista();
+    }
+
+    function resetECarregar() {
+        const p = document.getElementById('select-partida');
+        const d = document.getElementById('select-destino');
+        
+        if (p.value === d.value) {
+            atualizarDestinos();
+        }
+        
+        p.setAttribute('data-local', p.value);
+        d.setAttribute('data-local', d.value);
+        
+        horarioSelecionadoManual = null;
+        ultimoHorarioAlvo = null;
+        limparSinais();
+        salvarPreferencias();
         gerarLista();
     }
 
     function resetarDataHoje() {
-        const hoje = new Date();
-        const dataLocal = new Date(hoje.getTime() - (hoje.getTimezoneOffset() * 60000));
-        document.getElementById('input-data').value = dataLocal.toISOString().split('T')[0];
-        ajustarDiaPorData();
+        const agora = new Date();
+        const f = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, '0') + "-" + String(agora.getDate()).padStart(2, '0');
+        document.getElementById('input-data').value = f;
+        document.getElementById('check-feriado').checked = FERIADOS_FIXOS.includes(`${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`);
+        gerarLista();
     }
 
     function ajustarDiaPorData() {
-        const dataInput = document.getElementById('input-data').value;
-        if (dataInput) {
-            const partes = dataInput.split('-');
+        const dt = document.getElementById('input-data').value;
+        if(dt) {
+            const partes = dt.split('-');
             document.getElementById('check-feriado').checked = FERIADOS_FIXOS.includes(`${partes[1]}-${partes[2]}`);
         }
         gerarLista();
     }
 
     function validarData() {
-        horarioSelecionadoManual = null; ultimoHorarioAlvo = null; limparSinais();
+        horarioSelecionadoManual = null;
+        ultimoHorarioAlvo = null;
+        limparSinais();
         if (!document.getElementById('input-data').value) resetarDataHoje();
         else ajustarDiaPorData();
     }
@@ -563,16 +575,21 @@
         const isFeriado = document.getElementById('check-feriado').checked;
         const listaDiv = document.getElementById('lista-horarios');
         const timerBox = document.getElementById('timer-box');
+        
         const agoraOriginal = new Date();
         const agoraLimpo = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), agoraOriginal.getHours(), agoraOriginal.getMinutes(), 0, 0);
         ultimoMinutoRenderizado = agoraOriginal.getMinutes();
+        
         const dataObj = new Date(dataInput + "T00:00:00");
         let filtroDia = isFeriado ? "Feriado" : (dataObj.getDay() === 0 ? "Domingo" : (dataObj.getDay() === 6 ? "Sábado" : "Dia Útil"));
         document.getElementById('info-dia').innerText = filtroDia;
+        
         const horarios = (db[partida] && db[partida][destino]) ? (db[partida][destino][filtroDia] || []) : [];
         listaDiv.innerHTML = "";
+        
         const ehHoje = (dataInput === new Date(agoraOriginal.getTime() - (agoraOriginal.getTimezoneOffset() * 60000)).toISOString().split('T')[0]);
         let proximoAuto = null;
+        
         if (ehHoje) {
             horarios.forEach(h => {
                 const [hr, min] = h.split(':');
@@ -580,70 +597,77 @@
                 if (hV > agoraLimpo && !proximoAuto) proximoAuto = h;
             });
         }
+        
         const alvoFinal = (ehHoje && !horarioSelecionadoManual) ? proximoAuto : horarioSelecionadoManual;
         const infoDH = document.getElementById('data-hora-info');
         const diaFormatado = dataInput.split('-').slice(1).reverse().join('/');
         
-        // Mapeia os índices do alvo e o total para exibição no timer
         const totalHorarios = horarios.length;
         const indiceAlvo = alvoFinal ? (horarios.indexOf(alvoFinal) + 1) : 0;
         const sufixoContador = totalHorarios > 0 && indiceAlvo > 0 ? ` ${indiceAlvo}/${totalHorarios}` : "";
-
+        
         if (ehHoje) {
             if (horarioSelecionadoManual && horarioSelecionadoManual !== proximoAuto) {
                 timerBox.classList.remove('modo-real');
-                document.getElementById('timer-status').innerText = "Horário Selecionado:" + sufixoContador;
-                infoDH.innerText = `${diaFormatado} às ${horarioSelecionadoManual}`;
-            } else {
+                document.getElementById('timer-status').innerText = "Horário Selecionado" + sufixoContador + ":";
+            } else if (proximoAuto) {
                 timerBox.classList.add('modo-real');
-                document.getElementById('timer-status').innerText = "Próximo Horário:" + sufixoContador;
-                infoDH.innerText = ""; 
+                document.getElementById('timer-status').innerText = "Próximo Fretado" + sufixoContador + ":";
+            } else {
+                timerBox.classList.remove('modo-real');
+                document.getElementById('timer-status').innerText = "Fretados Encerrados:";
             }
+            infoDH.innerText = "";
         } else {
             timerBox.classList.remove('modo-real');
-            document.getElementById('timer-status').innerText = "Horário Selecionado:" + sufixoContador;
-            infoDH.innerText = alvoFinal ? `${diaFormatado} às ${alvoFinal}` : `${diaFormatado}`;
+            document.getElementById('timer-status').innerText = horarioSelecionadoManual ? "Selecionado" + sufixoContador + ":" : "Fretados Programados:";
+            infoDH.innerText = "Para o dia " + diaFormatado;
         }
         
         horarios.forEach((h, index) => {
             const card = document.createElement('div');
-            card.className = 'horario-card';
-            card.innerText = h;
+            card.className = "horario-card";
             
-            // Inserção do indicador de número sequencial do lado esquerdo do card
-            const idxSpan = document.createElement('span');
-            idxSpan.className = 'card-index';
-            idxSpan.innerText = index + 1;
-
-            // Altera a opacidade para 1 apenas se o item correspondente estiver selecionado/ativo
-            if ((h === alvoFinal && ehHoje) || (!ehHoje && h === horarioSelecionadoManual)) {
-                idxSpan.style.opacity = "1";
+            const indexSpan = document.createElement('span');
+            indexSpan.className = "card-index";
+            indexSpan.innerText = String(index + 1).padStart(2, '0');
+            card.appendChild(indexSpan);
+            
+            const txt = document.createTextNode(h);
+            card.appendChild(txt);
+            
+            if (ehHoje) {
+                const [hr, min] = h.split(':');
+                const hV = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), parseInt(hr), parseInt(min), 0, 0);
+                if (hV <= agoraLimpo) card.classList.add('passado');
             }
             
-            card.appendChild(idxSpan);
-
-            const [hr, min] = h.split(':');
-            const hV = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), parseInt(hr), parseInt(min), 0, 0);
-            if (ehHoje && hV <= agoraLimpo) card.classList.add('passado');
-            if (h === alvoFinal && ehHoje && hV > agoraLimpo) {
-                card.classList.remove('passado');
+            if (ehHoje && h === alvoFinal) {
                 card.classList.add('proximo-fretado-sempre');
                 const badge = document.createElement('span');
-                badge.className = 'badge-status';
+                badge.className = "badge-status";
                 badge.innerText = (h === proximoAuto) ? 'PRÓXIMO' : 'SELECIONADO';
                 card.appendChild(badge);
+                
                 if (h !== ultimoHorarioAlvo) {
                     ultimoHorarioAlvo = h;
                     setTimeout(() => card.scrollIntoView({ block: 'start' }), 200);
                 }
-            } else if (!ehHoje && h === horarioSelecionadoManual) card.classList.add('proximo-fretado-sempre');
+            } else if (!ehHoje && h === horarioSelecionadoManual) {
+                card.classList.add('proximo-fretado-sempre');
+            }
+            
             if (horarioSelecionadoManual && h === horarioSelecionadoManual) card.classList.add('selecionado');
+            
             card.onclick = () => {
                 horarioSelecionadoManual = (h === proximoAuto || horarioSelecionadoManual === h) ? null : h;
-                limparSinais(); ultimoHorarioAlvo = null; gerarLista();
+                limparSinais();
+                ultimoHorarioAlvo = null;
+                gerarLista();
             };
             listaDiv.appendChild(card);
         });
+        
         const diffDias = Math.round((new Date(dataObj.getFullYear(), dataObj.getMonth(), dataObj.getDate()) - new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate())) / 86400000);
         iniciarContagem(alvoFinal, diffDias, (ehHoje && (!horarioSelecionadoManual || horarioSelecionadoManual === proximoAuto)));
     }
@@ -652,57 +676,65 @@
     function iniciarContagem(hAlvo, diffDias, isProximoReal) {
         clearInterval(timerInterval);
         const display = document.getElementById('countdown');
-        const timerBox = document.getElementById('timer-box'); 
+        const timerBox = document.getElementById('timer-box');
+        
         if (diffDias !== 0) {
-            timerBox.classList.remove('modo-encerrado'); 
+            timerBox.classList.remove('modo-encerrado');
             display.innerText = diffDias === 1 ? "Amanhã" : (diffDias === -1 ? "Ontem" : (diffDias > 1 ? `Em ${diffDias} dias` : `Há ${Math.abs(diffDias)} dias`));
             return;
         }
-        if (!hAlvo) { display.innerText = "Encerrado"; timerBox.classList.add('modo-encerrado'); return; } 
-        else timerBox.classList.remove('modo-encerrado'); 
+        
+        if (!hAlvo) {
+            display.innerText = "Encerrado";
+            timerBox.classList.add('modo-encerrado');
+            return;
+        } else {
+            timerBox.classList.remove('modo-encerrado');
+        }
+        
         const [h, m] = hAlvo.split(':');
-        const alvo = new Date(); alvo.setHours(parseInt(h), parseInt(m), 0, 0);
+        const alvo = new Date();
+        alvo.setHours(parseInt(h), parseInt(m), 0, 0);
         
         timerInterval = setInterval(() => {
             const agora = new Date();
+            if (agora.getMinutes() !== ultimoMinutoRenderizado) {
+                clearInterval(timerInterval);
+                gerarLista();
+                return;
+            }
+            
             const diff = alvo - agora;
             
-            if (agora.getMinutes() !== ultimoMinutoRenderizado) { gerarLista(); return; }
-            
-            if (isProximoReal && navigator.vibrate) {
-                if (diff <= 180000 && diff > 179000 && !vibrouTresMinutos) { navigator.vibrate([100,100,100,100,100]); vibrouTresMinutos = true; }
-                if (diff <= 60000 && diff > 59000 && !vibrouUmMinuto) { navigator.vibrate([100,100,100]); vibrouUmMinuto = true; }
-            }
-
-            const notifAtiva = document.getElementById('check-notif').checked;
-            const slideVal = parseInt(document.getElementById('range-notif').value);
-            const tempoNotif = slideVal * 60000;
-            
-            if(notifAtiva && isProximoReal && ("serviceWorker" in navigator) && Notification.permission === "granted") {
-                if(diff <= (tempoNotif + 2000) && diff > (tempoNotif - 2000) && !notificouAlerta) {
-                    let msgNotif = slideVal === 0 
-                        ? `🚍 Veículo das ${hAlvo} saindo!` 
-                        : `⏰ O próximo veículo sai em ${slideVal} min`;
-
-                    enviarAlertaAoServiceWorker("Vivo Transporte", msgNotif, 0);
-                    notificouAlerta = true;
-                }
-            }
-
-            if (diff <= 0) {
-                if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
+            if (isProximoReal && document.getElementById('check-notif').checked) {
+                const antecMin = parseInt(document.getElementById('range-notif').value);
+                const tempoNotif = antecMin * 60000;
                 
-                if(notifAtiva && isProximoReal && ("serviceWorker" in navigator) && Notification.permission === "granted" && !notificouPartida) {
-                    enviarAlertaAoServiceWorker("Bus Partiu", `🚍 O veículo das ${hAlvo} partiu`, 0);
-                    notificouPartida = true;
+                if (diff <= tempoNotif && diff > (tempoNotif - 30000) && !notificouAlerta) {
+                    notificouAlerta = true;
+                    enviarAlertaAoServiceWorker(
+                        "Fretado Chegando! ⏳", 
+                        `Seu fretado das ${hAlvo} sairá em ${antecMin} minutos. Prepare-se!`, 
+                        0
+                    );
                 }
-
-                display.innerText = "00:00:00"; 
-                timerBox.classList.add('modo-encerrado'); 
+                
+                if (diff <= 0 && diff > -30000 && !notificouPartida) {
+                    notificouPartida = true;
+                    enviarAlertaAoServiceWorker(
+                        "Horário de Partida! 🚌", 
+                        `O fretado das ${hAlvo} está saindo agora.`, 
+                        0
+                    );
+                }
+            }
+            
+            if (diff <= 0) {
                 clearInterval(timerInterval);
-                horarioSelecionadoManual = null; 
-                ultimoHorarioAlvo = null; 
-                setTimeout(gerarLista, 1000); 
+                display.innerText = "00:00:00";
+                horarioSelecionadoManual = null;
+                ultimoHorarioAlvo = null;
+                setTimeout(gerarLista, 1000);
                 return;
             }
 
@@ -730,15 +762,10 @@
 
     function limparSinais() { 
         vibrouTresMinutos = vibrouUmMinuto = vibrouChegada = false; 
-        notificouAlerta = notificouPartida = false;
+        notificouAlerta = notificouPartida = false; 
     }
+
     window.onload = iniciar;
-    
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('SW OK'))
-            .catch(err => console.log('SW Erro', err));
-    }
 </script>
 </body>
 </html>
