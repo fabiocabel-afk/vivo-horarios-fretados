@@ -121,20 +121,19 @@
             border: 1px solid rgba(0,0,0,0.05); color: var(--text-main); position: relative;
         }
 
-        .horario-index { 
-            position: absolute; left: 18px; font-size: 0.85rem; font-weight: 800; color: #D0D0D0; transition: color 0.3s; 
-        }
-
         .horario-card.passado { color: var(--text-past) !important; font-weight: 400 !important; background: #fdfdfd !important; }
-        .horario-card.passado .horario-index { color: #E8E8E8; }
-        
         .horario-card.selecionado { border: 2.5px solid var(--vivo-purple); background: #f3ebff; color: var(--vivo-purple); }
-        .horario-card.selecionado .horario-index { color: rgba(100, 42, 144, 0.4); }
-
         .horario-card.proximo-fretado-sempre { background: var(--vivo-green) !important; color: white !important; border: none !important; font-weight: 800 !important; }
-        .horario-card.proximo-fretado-sempre .horario-index { color: rgba(255, 255, 255, 0.6); }
-
         .badge-status { position: absolute; right: 15px; font-size: 0.6rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; }
+        
+        .card-index { 
+            position: absolute; 
+            left: 15px; 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            color: inherit; 
+            opacity: 0.3; 
+        }
 
         .menu-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 2000; }
         .btn-menu-float { width: 56px; height: 56px; background: var(--vivo-purple); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; cursor: pointer; }
@@ -319,8 +318,10 @@
     let localizacaoSelecionada = null;
 
     function enviarAlertaAoServiceWorker(titulo, mensagem, tempoMs) {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.ready.then(registration => {
+            registration.active.postMessage({
                 type: 'SCHEDULE_NOTIFICATION',
                 delay: tempoMs,
                 title: titulo,
@@ -332,7 +333,7 @@
                     renotify: true
                 }
             });
-        }
+        });
     }
 
     function redefinirApp() {
@@ -367,7 +368,9 @@
             toggleNotifSliderTemp();
 
             if("Notification" in window && Notification.permission !== "granted") {
-                Notification.requestPermission();
+                Notification.requestPermission().then(permission => {
+                    console.log("Permissão:", permission);
+                });
             }
         }
     }
@@ -583,70 +586,63 @@
         const infoDH = document.getElementById('data-hora-info');
         const diaFormatado = dataInput.split('-').slice(1).reverse().join('/');
         
+        const totalHorarios = horarios.length;
+        const indiceAlvo = alvoFinal ? (horarios.indexOf(alvoFinal) + 1) : 0;
+        const sufixoContador = totalHorarios > 0 && indiceAlvo > 0 ? ` ${indiceAlvo}/${totalHorarios}` : "";
+
         if (ehHoje) {
             if (horarioSelecionadoManual && horarioSelecionadoManual !== proximoAuto) {
                 timerBox.classList.remove('modo-real');
-                document.getElementById('timer-status').innerText = "Horário Selecionado:";
+                document.getElementById('timer-status').innerText = "Horário Selecionado:" + sufixoContador;
                 infoDH.innerText = `${diaFormatado} às ${horarioSelecionadoManual}`;
             } else {
                 timerBox.classList.add('modo-real');
-                document.getElementById('timer-status').innerText = "Próximo Horário:";
+                document.getElementById('timer-status').innerText = "Próximo Horário:" + sufixoContador;
                 infoDH.innerText = ""; 
             }
         } else {
             timerBox.classList.remove('modo-real');
-            document.getElementById('timer-status').innerText = "Horário Selecionado:";
+            document.getElementById('timer-status').innerText = "Horário Selecionado:" + sufixoContador;
             infoDH.innerText = alvoFinal ? `${diaFormatado} às ${alvoFinal}` : `${diaFormatado}`;
         }
         
-        // CORREÇÃO: Criação limpa da lista separando o número do índice da variável 'h' para não quebrar a notificação
         horarios.forEach((h, index) => {
             const card = document.createElement('div');
             card.className = 'horario-card';
+            card.innerText = h;
             
-            const spanIndex = document.createElement('span');
-            spanIndex.className = 'horario-index';
-            spanIndex.innerText = String(index + 1).padStart(2, '0');
+            const idxSpan = document.createElement('span');
+            idxSpan.className = 'card-index';
+            idxSpan.innerText = index + 1;
+
+            if ((h === alvoFinal && ehHoje) || (!ehHoje && h === horarioSelecionadoManual)) {
+                idxSpan.style.opacity = "1";
+            }
             
-            const spanTime = document.createElement('span');
-            spanTime.innerText = h;
-            
-            card.appendChild(spanIndex);
-            card.appendChild(spanTime);
-            
+            card.appendChild(idxSpan);
+
             const [hr, min] = h.split(':');
             const hV = new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate(), parseInt(hr), parseInt(min), 0, 0);
-            
             if (ehHoje && hV <= agoraLimpo) card.classList.add('passado');
-            
             if (h === alvoFinal && ehHoje && hV > agoraLimpo) {
                 card.classList.remove('passado');
                 card.classList.add('proximo-fretado-sempre');
-                
                 const badge = document.createElement('span');
                 badge.className = 'badge-status';
                 badge.innerText = (h === proximoAuto) ? 'PRÓXIMO' : 'SELECIONADO';
                 card.appendChild(badge);
-                
                 if (h !== ultimoHorarioAlvo) {
                     ultimoHorarioAlvo = h;
                     setTimeout(() => card.scrollIntoView({ block: 'start' }), 200);
                 }
-            } else if (!ehHoje && h === horarioSelecionadoManual) {
-                card.classList.add('proximo-fretado-sempre');
-            }
-
-            if (horarioSelecionadoManual && h === horarioSelecionadoManual) {
-                card.classList.add('selecionado');
-            }
-
+            } else if (!ehHoje && h === horarioSelecionadoManual) card.classList.add('proximo-fretado-sempre');
+            if (horarioSelecionadoManual && h === horarioSelecionadoManual) card.classList.add('selecionado');
             card.onclick = () => {
                 horarioSelecionadoManual = (h === proximoAuto || horarioSelecionadoManual === h) ? null : h;
                 limparSinais(); ultimoHorarioAlvo = null; gerarLista();
             };
             listaDiv.appendChild(card);
         });
-
         const diffDias = Math.round((new Date(dataObj.getFullYear(), dataObj.getMonth(), dataObj.getDate()) - new Date(agoraOriginal.getFullYear(), agoraOriginal.getMonth(), agoraOriginal.getDate())) / 86400000);
         iniciarContagem(alvoFinal, diffDias, (ehHoje && (!horarioSelecionadoManual || horarioSelecionadoManual === proximoAuto)));
     }
@@ -670,7 +666,11 @@
             const agora = new Date();
             const diff = alvo - agora;
             
-            if (agora.getMinutes() !== ultimoMinutoRenderizado) { gerarLista(); return; }
+            if (agora.getMinutes() !== ultimoMinutoRenderizado) { 
+                ultimoMinutoRenderizado = agora.getMinutes();
+                gerarLista(); 
+                return; 
+            }
             
             if (isProximoReal && navigator.vibrate) {
                 if (diff <= 180000 && diff > 179000 && !vibrouTresMinutos) { navigator.vibrate([100,100,100,100,100]); vibrouTresMinutos = true; }
