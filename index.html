@@ -317,23 +317,74 @@
     let ultimoMinutoRenderizado = -1;
     let localizacaoSelecionada = null;
 
-    function enviarAlertaAoServiceWorker(titulo, mensagem, tempoMs) {
+    // ── Wake Lock: mantém a tela visível enquanto o timer estiver ativo ────────
+    let wakeLock = null;
+
+    async function ativarWakeLock() {
+        if (!('wakeLock' in navigator)) return;
+        try {
+            if (wakeLock) return; // já ativo
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => { wakeLock = null; });
+        } catch (e) { /* ignora se bloqueado pelo SO */ }
+    }
+
+    async function liberarWakeLock() {
+        if (wakeLock) {
+            await wakeLock.release().catch(() => {});
+            wakeLock = null;
+        }
+    }
+
+    // Reativa o wake lock quando o usuário volta para a aba
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && timerAtivo) ativarWakeLock();
+    });
+
+    // ── Notificações via Service Worker ────────────────────────────────────────
+    function enviarAlertaAoServiceWorker(titulo, mensagem, tempoMs, idNotif) {
         if (!('serviceWorker' in navigator)) return;
 
-        navigator.serviceWorker.ready.then(registration => {
-            registration.active.postMessage({
+        // Fallback direto caso SW não esteja disponível
+        if (Notification.permission === 'granted' && tempoMs === 0) {
+            try {
+                new Notification(titulo, {
+                    body: mensagem,
+                    icon: 'favicon.png',
+                    tag: 'alerta-fretado',
+                    renotify: true
+                });
+            } catch(e) {}
+        }
+
+        navigator.serviceWorker.ready.then(reg => {
+            if (!reg.active) return;
+            reg.active.postMessage({
                 type: 'SCHEDULE_NOTIFICATION',
+                id: idNotif || 'alerta-fretado',
                 delay: tempoMs,
                 title: titulo,
                 options: {
                     body: mensagem,
                     icon: 'favicon.png',
-                    vibrate: [1000],
+                    badge: 'favicon.png',
+                    vibrate: [200, 100, 200, 100, 200],
                     tag: 'alerta-fretado',
-                    renotify: true
+                    renotify: true,
+                    requireInteraction: false,
+                    silent: false,
+                    timestamp: Date.now() + tempoMs
                 }
             });
-        });
+        }).catch(() => {});
+    }
+
+    function cancelarNotificacaoAgendada() {
+        if (!('serviceWorker' in navigator)) return;
+        navigator.serviceWorker.ready.then(reg => {
+            if (!reg.active) return;
+            reg.active.postMessage({ type: 'CANCEL_NOTIFICATION', id: 'alerta-fretado' });
+        }).catch(() => {});
     }
 
     function redefinirApp() {
@@ -647,9 +698,12 @@
         iniciarContagem(alvoFinal, diffDias, (ehHoje && (!horarioSelecionadoManual || horarioSelecionadoManual === proximoAuto)));
     }
 
+    let timerAtivo = false;
     let timerInterval;
     function iniciarContagem(hAlvo, diffDias, isProximoReal) {
         clearInterval(timerInterval);
+        timerAtivo = false;
+        liberarWakeLock();
         const display = document.getElementById('countdown');
         const timerBox = document.getElementById('timer-box'); 
         if (diffDias !== 0) {
@@ -661,6 +715,9 @@
         else timerBox.classList.remove('modo-encerrado'); 
         const [h, m] = hAlvo.split(':');
         const alvo = new Date(); alvo.setHours(parseInt(h), parseInt(m), 0, 0);
+
+        timerAtivo = true;
+        ativarWakeLock();
         
         timerInterval = setInterval(() => {
             const agora = new Date();
@@ -687,7 +744,7 @@
                         ? `🚍 Veículo das ${hAlvo} saindo!` 
                         : `⏰ O próximo veículo sai em ${slideVal} min`;
 
-                    enviarAlertaAoServiceWorker("Vivo Transporte", msgNotif, 0);
+                    enviarAlertaAoServiceWorker("Vivo Transporte", msgNotif, 0, 'alerta-antecedencia');
                     notificouAlerta = true;
                 }
             }
@@ -696,13 +753,15 @@
                 if (isProximoReal && navigator.vibrate && !vibrouChegada) { navigator.vibrate([500,200,500]); vibrouChegada = true; }
                 
                 if(notifAtiva && isProximoReal && ("serviceWorker" in navigator) && Notification.permission === "granted" && !notificouPartida) {
-                    enviarAlertaAoServiceWorker("Bus Partiu", `🚍 O veículo das ${hAlvo} partiu`, 0);
+                    enviarAlertaAoServiceWorker("Bus Partiu", `🚍 O veículo das ${hAlvo} partiu`, 0, 'alerta-partida');
                     notificouPartida = true;
                 }
 
                 display.innerText = "00:00:00"; 
                 timerBox.classList.add('modo-encerrado'); 
                 clearInterval(timerInterval);
+                timerAtivo = false;
+                liberarWakeLock();
                 horarioSelecionadoManual = null; 
                 ultimoHorarioAlvo = null; 
                 setTimeout(gerarLista, 1000); 
@@ -734,6 +793,7 @@
     function limparSinais() { 
         vibrouTresMinutos = vibrouUmMinuto = vibrouChegada = false; 
         notificouAlerta = notificouPartida = false;
+        cancelarNotificacaoAgendada();
     }
     window.onload = iniciar;
     
